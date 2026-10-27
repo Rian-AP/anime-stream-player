@@ -313,8 +313,8 @@ export async function onRequestGet(context) {
 
   const rawVideos = videosData?.response || [];
   const epVideos = rawVideos.filter(v => {
-    let ep = v.data?.number;
-    if (ep === null || ep === undefined) {
+    let ep = v.number ? parseInt(v.number, 10) : v.data?.number;
+    if (ep === null || ep === undefined || isNaN(ep)) {
       const match = (v.iframe_url || '').match(/[?&]episode=(\d+)/);
       if (match) ep = parseInt(match[1], 10);
     }

@@ -1,26 +1,20 @@
-import { onRequestGet as handleStream } from './functions/api/stream.js';
-import { onRequestGet as handleSearch } from './functions/api/search.js';
-import { onRequestGet as handleEpisodes } from './functions/api/episodes.js';
+import { onRequestGet } from './functions/api/stream.js';
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    // API Route: /api/stream (Clean JSON backend extractor)
     if (url.pathname === '/api/stream') {
-      return handleStream({ request, env });
-    }
-    if (url.pathname === '/api/search') {
-      return handleSearch({ request, env });
-    }
-    if (url.pathname === '/api/episodes') {
-      return handleEpisodes({ request, env });
+      return onRequestGet({ request, env });
     }
 
-    // Serve static files from /public via Cloudflare Assets
-    if (env.ASSETS) {
-      return env.ASSETS.fetch(request);
-    }
-
-    return new Response('Not Found', { status: 404 });
+    return new Response(JSON.stringify({
+      status: "ok",
+      service: "Anime Stream Extractor API",
+      usage: "/api/stream?anime_id={id}&episode={number}"
+    }, null, 2), {
+      headers: { "Content-Type": "application/json" }
+    });
   }
 };

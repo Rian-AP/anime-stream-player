@@ -2,7 +2,3 @@ name = "anime-stream-player"
 main = "worker.js"
 compatibility_date = "2024-10-01"
 compatibility_flags = ["nodejs_compat"]
-
-[assets]
-directory = "./public"
-binding = "ASSETS"
