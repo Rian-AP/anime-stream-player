@@ -313,7 +313,11 @@ export async function onRequestGet(context) {
 
   const rawVideos = videosData?.response || [];
   const epVideos = rawVideos.filter(v => {
-    const ep = v.data?.number;
+    let ep = v.data?.number;
+    if (ep === null || ep === undefined) {
+      const match = (v.iframe_url || '').match(/[?&]episode=(\d+)/);
+      if (match) ep = parseInt(match[1], 10);
+    }
     return ep === episode || ep === null || ep === undefined;
   });
 
