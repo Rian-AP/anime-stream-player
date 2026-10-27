@@ -311,7 +311,8 @@
   searchBtn.addEventListener('click', () => doSearch(searchInput.value));
 
   async function doSearch(query) {
-    if (!query || !query.trim()) {
+    const q = (query || '').trim();
+    if (!q || q.length < 2) {
       searchResults.style.display = 'none';
       return;
     }
@@ -319,7 +320,7 @@
     searchResults.innerHTML = '<div style="color: var(--subtext); padding: 10px;">Ищем...</div>';
 
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}`);
+      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
       const data = await res.json();
       const items = data.results || [];
 
@@ -336,6 +337,7 @@
           <img src="${item.poster || ''}" alt="${item.title}" loading="lazy">
           <div class="anime-card-info">
             <div class="anime-card-title">${item.title}</div>
+            ${item.orig_title ? `<div class="anime-card-meta" style="color: #a4b0be; font-size: 10px;">${item.orig_title}</div>` : ''}
             <div class="anime-card-meta">${item.year || ''} • ★ ${item.rating || '-'}</div>
           </div>
         `;
