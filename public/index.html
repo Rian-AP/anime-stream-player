@@ -8,51 +8,146 @@
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <style>
     :root {
-      --bg: #0f1117;
-      --card: #181b26;
+      --bg: #0b0c10;
+      --card: #151821;
       --accent: #ff4757;
+      --accent-hover: #ff6b81;
       --text: #f1f2f6;
-      --subtext: #a4b0be;
+      --subtext: #8e94a5;
+      --border: #242938;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      padding: 12px;
       display: flex;
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
     .container {
       width: 100%;
-      max-width: 900px;
+      max-width: 960px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
     }
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #2f3542;
+      padding: 4px 0 10px 0;
+      border-bottom: 1px solid var(--border);
     }
     header h1 {
-      font-size: 20px;
+      font-size: 19px;
       color: var(--accent);
       display: flex;
       align-items: center;
       gap: 8px;
     }
+    .search-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+    .search-box {
+      display: flex;
+      gap: 8px;
+    }
+    input {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
+      flex: 1;
+      transition: border 0.2s;
+    }
+    input:focus {
+      border-color: var(--accent);
+    }
+    button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    button:hover { background: var(--accent-hover); }
+    button:active { opacity: 0.85; }
+
+    /* Search results dropdown / grid */
+    .search-results {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 12px;
+      max-height: 380px;
+      overflow-y: auto;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .anime-card {
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #1c202d;
+      border: 1px solid transparent;
+      transition: all 0.2s;
+    }
+    .anime-card:hover, .anime-card.selected {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .anime-card img {
+      width: 100%;
+      aspect-ratio: 3 / 4;
+      object-fit: cover;
+      background: #000;
+    }
+    .anime-card-info {
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .anime-card-title {
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.25;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .anime-card-meta {
+      font-size: 11px;
+      color: var(--subtext);
+    }
+
+    /* Video player box */
     .player-box {
       width: 100%;
       aspect-ratio: 16 / 9;
       background: #000;
       border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      box-shadow: 0 12px 36px rgba(0,0,0,0.6);
       position: relative;
     }
     video {
@@ -60,47 +155,63 @@
       height: 100%;
       display: block;
     }
-    .controls-panel {
+
+    /* Episodes and dubbing section */
+    .details-panel {
       background: var(--card);
       border-radius: 12px;
-      padding: 16px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 14px;
+      border: 1px solid var(--border);
     }
-    .input-row {
-      display: flex;
-      gap: 10px;
-    }
-    input, select, button {
-      background: #232738;
-      border: 1px solid #353b48;
-      color: var(--text);
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: 14px;
-      outline: none;
-    }
-    input:focus, select:focus {
-      border-color: var(--accent);
-    }
-    button {
-      background: var(--accent);
-      border: none;
+    .section-title {
+      font-size: 13px;
       font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.2s;
+      color: var(--subtext);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
-    button:active { opacity: 0.8; }
+    .episodes-bar {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+    }
+    .episodes-bar::-webkit-scrollbar { height: 6px; }
+    .episodes-bar::-webkit-scrollbar-thumb { background: #2f3542; border-radius: 3px; }
+    .ep-btn {
+      background: #1c202d;
+      border: 1px solid var(--border);
+      color: var(--text);
+      min-width: 44px;
+      height: 38px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 0 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .ep-btn:hover, .ep-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* Streams grid */
     .streams-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
       gap: 10px;
-      margin-top: 8px;
     }
     .stream-card {
-      background: #232738;
-      border: 1px solid #353b48;
+      background: #1c202d;
+      border: 1px solid var(--border);
       border-radius: 8px;
       padding: 12px;
       cursor: pointer;
@@ -111,7 +222,7 @@
     }
     .stream-card:hover, .stream-card.active {
       border-color: var(--accent);
-      background: #2d3248;
+      background: #252b3d;
     }
     .stream-header {
       display: flex;
@@ -123,19 +234,18 @@
       color: var(--accent);
       padding: 2px 8px;
       border-radius: 4px;
-      font-size: 12px;
-      font-weight: bold;
+      font-size: 11px;
+      font-weight: 700;
     }
     .stream-meta {
       font-size: 12px;
       color: var(--subtext);
     }
     .stats-bar {
-      font-size: 13px;
+      font-size: 12px;
       color: var(--subtext);
       display: flex;
       justify-content: space-between;
-      padding: 4px 0;
     }
   </style>
 </head>
@@ -144,49 +254,142 @@
 <div class="container">
   <header>
     <h1>⚡ Anime Edge Player</h1>
-    <span style="font-size: 12px; color: #2ed573;">Cloudflare Pages 24/7</span>
+    <span style="font-size: 12px; color: #2ed573;">Cloudflare Edge 24/7</span>
   </header>
 
+  <!-- Live Search Section -->
+  <div class="search-section">
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Поиск аниме (например: Клинок, Наруто, Атака титанов)...">
+      <button id="searchBtn">Найти</button>
+    </div>
+    <div class="search-results" id="searchResults" style="display: none;"></div>
+  </div>
+
+  <!-- Main Video Player -->
   <div class="player-box">
     <video id="videoPlayer" controls playsinline></video>
   </div>
 
-  <div class="controls-panel">
-    <div class="input-row">
-      <input type="number" id="animeIdInput" value="2" placeholder="Anime ID" style="width: 110px;">
-      <input type="number" id="episodeInput" value="1" placeholder="Серия" style="width: 80px;">
-      <button id="loadBtn" style="flex: 1;">⚡ Загрузить серию</button>
+  <!-- Episodes & Dubs Control -->
+  <div class="details-panel">
+    <div>
+      <div class="section-title" id="nowPlayingTitle">Выберите аниме или серию</div>
+      <div class="episodes-bar" id="episodesBar" style="margin-top: 8px;"></div>
     </div>
 
-    <div class="stats-bar" id="statsBar">
-      <span>Готов к загрузке потоков</span>
-      <span id="loadTime">0 мс</span>
+    <div>
+      <div class="stats-bar" style="margin-bottom: 8px;">
+        <span class="section-title">Доступные озвучки и плееры</span>
+        <span id="loadTime"></span>
+      </div>
+      <div class="streams-grid" id="streamsGrid"></div>
     </div>
-
-    <div class="streams-grid" id="streamsGrid"></div>
   </div>
 </div>
 
 <script>
   const video = document.getElementById('videoPlayer');
-  const animeIdInput = document.getElementById('animeIdInput');
-  const episodeInput = document.getElementById('episodeInput');
-  const loadBtn = document.getElementById('loadBtn');
+  const searchInput = document.getElementById('searchInput');
+  const searchBtn = document.getElementById('searchBtn');
+  const searchResults = document.getElementById('searchResults');
+  const nowPlayingTitle = document.getElementById('nowPlayingTitle');
+  const episodesBar = document.getElementById('episodesBar');
   const streamsGrid = document.getElementById('streamsGrid');
-  const statsBar = document.getElementById('statsBar');
   const loadTime = document.getElementById('loadTime');
 
+  let currentAnime = { id: 2, title: '5 сантиметров в секунду' };
+  let currentEpisode = 1;
   let currentHls = null;
+  let searchTimeout = null;
 
-  async function loadStreams() {
-    const animeId = animeIdInput.value.trim();
-    const episode = episodeInput.value.trim();
-    if (!animeId) return;
+  // 1. Live Search
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => doSearch(searchInput.value), 350);
+  });
+  searchBtn.addEventListener('click', () => doSearch(searchInput.value));
 
-    loadBtn.disabled = true;
-    loadBtn.innerText = 'Загрузка...';
+  async function doSearch(query) {
+    if (!query || !query.trim()) {
+      searchResults.style.display = 'none';
+      return;
+    }
+    searchResults.style.display = 'grid';
+    searchResults.innerHTML = '<div style="color: var(--subtext); padding: 10px;">Ищем...</div>';
+
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}`);
+      const data = await res.json();
+      const items = data.results || [];
+
+      if (items.length === 0) {
+        searchResults.innerHTML = '<div style="color: var(--subtext); padding: 10px;">Ничего не найдено</div>';
+        return;
+      }
+
+      searchResults.innerHTML = '';
+      items.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'anime-card';
+        card.innerHTML = `
+          <img src="${item.poster || ''}" alt="${item.title}" loading="lazy">
+          <div class="anime-card-info">
+            <div class="anime-card-title">${item.title}</div>
+            <div class="anime-card-meta">${item.year || ''} • ★ ${item.rating || '-'}</div>
+          </div>
+        `;
+        card.onclick = () => {
+          searchResults.style.display = 'none';
+          searchInput.value = item.title;
+          selectAnime(item.anime_id, item.title);
+        };
+        searchResults.appendChild(card);
+      });
+    } catch (e) {
+      searchResults.innerHTML = `<div style="color: #ff6b81; padding: 10px;">Ошибка: ${e.message}</div>`;
+    }
+  }
+
+  // 2. Select Anime & Fetch Episodes
+  async function selectAnime(animeId, title) {
+    currentAnime = { id: animeId, title };
+    nowPlayingTitle.innerText = `${title} — Загрузка серий...`;
+    episodesBar.innerHTML = '';
     streamsGrid.innerHTML = '';
-    statsBar.children[0].innerText = 'Опрос плееров Alloha, Kodik, CVH...';
+
+    try {
+      const res = await fetch(`/api/episodes?anime_id=${animeId}`);
+      const data = await res.json();
+      const episodes = data.episodes || [1];
+
+      nowPlayingTitle.innerText = `${title} (${episodes.length} серий)`;
+      episodesBar.innerHTML = '';
+
+      episodes.forEach((ep, idx) => {
+        const btn = document.createElement('button');
+        btn.className = `ep-btn ${idx === 0 ? 'active' : ''}`;
+        btn.innerText = ep;
+        btn.onclick = () => {
+          document.querySelectorAll('.ep-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentEpisode = ep;
+          loadStreams(animeId, ep);
+        };
+        episodesBar.appendChild(btn);
+      });
+
+      currentEpisode = episodes[0] || 1;
+      loadStreams(animeId, currentEpisode);
+    } catch (err) {
+      nowPlayingTitle.innerText = `${title} — Ошибка загрузки серий`;
+    }
+  }
+
+  // 3. Load Streams for Anime + Episode
+  async function loadStreams(animeId, episode) {
+    streamsGrid.innerHTML = '<div style="color: var(--subtext); padding: 8px;">Опрос плееров Alloha, Kodik, CVH...</div>';
+    loadTime.innerText = 'Загрузка...';
 
     const start = Date.now();
     try {
@@ -194,24 +397,23 @@
       const data = await res.json();
       const elapsed = Date.now() - start;
 
-      loadTime.innerText = `${elapsed} мс`;
-      statsBar.children[0].innerText = `Найдено потоков: ${data.total_streams || 0}`;
+      loadTime.innerText = `⏱ ${elapsed} мс`;
 
       if (!data.streams || data.streams.length === 0) {
-        streamsGrid.innerHTML = '<div style="color: #ff6b81;">Плееры для этой серии не найдены</div>';
+        streamsGrid.innerHTML = '<div style="color: #ff6b81; padding: 8px;">Плееры для этой серии не найдены</div>';
         return;
       }
 
+      streamsGrid.innerHTML = '';
       data.streams.forEach((s, idx) => {
         const card = document.createElement('div');
         card.className = `stream-card ${idx === 0 ? 'active' : ''}`;
-        
-        const maxQuality = s.qualities ? (s.qualities['1080p'] ? '1080p' : (s.qualities['720p'] ? '720p' : '480p')) : 'HLS';
-        
+        const maxQ = s.qualities ? (s.qualities['1080p'] ? '1080p' : (s.qualities['720p'] ? '720p' : '480p')) : 'HLS';
+
         card.innerHTML = `
           <div class="stream-header">
             <strong>${s.voice}</strong>
-            <span class="badge">${maxQuality}</span>
+            <span class="badge">${maxQ}</span>
           </div>
           <div class="stream-meta">
             <span>Плеер: ${s.player.toUpperCase()}</span> • <span>${s.time_ms || 0} мс</span>
@@ -227,18 +429,17 @@
         streamsGrid.appendChild(card);
       });
 
-      // Auto play first stream
+      // Play first stream
       if (data.streams[0]) {
         playStream(data.streams[0].hls_url);
       }
     } catch (err) {
-      statsBar.children[0].innerText = 'Ошибка загрузки: ' + err.message;
-    } finally {
-      loadBtn.disabled = false;
-      loadBtn.innerText = '⚡ Загрузить серию';
+      streamsGrid.innerHTML = `<div style="color: #ff6b81;">Ошибка: ${err.message}</div>`;
+      loadTime.innerText = '';
     }
   }
 
+  // 4. Play Stream (PC: Hls.js, iOS Safari: Native HLS)
   function playStream(url) {
     if (!url) return;
     if (currentHls) {
@@ -252,14 +453,15 @@
       currentHls.attachMedia(video);
       currentHls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      // Native Safari on iPhone / iPad / Mac
       video.src = url;
       video.addEventListener('loadedmetadata', () => video.play().catch(() => {}));
     }
   }
 
-  loadBtn.onclick = loadStreams;
-  window.addEventListener('DOMContentLoaded', loadStreams);
+  // Initial load
+  window.addEventListener('DOMContentLoaded', () => {
+    selectAnime(2, '5 сантиметров в секунду');
+  });
 </script>
 
 </body>
