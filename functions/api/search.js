@@ -4,56 +4,53 @@ export async function onRequestGet(context) {
   const rawQ = url.searchParams.get('q') || '';
   const q = rawQ.trim();
 
-  if (!q) {
+  // If query is empty or 1 character, don't query upstream at all
+  if (!q || q.length < 2) {
     return new Response(JSON.stringify({ results: [] }), {
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-store, no-cache, must-revalidate'
+      }
     });
   }
 
   try {
-    let list = [];
+    let items = [];
 
-    // Strategy 1: Try the dedicated /search endpoint first if query length >= 3
+    // 1. Primary: Use dedicated /search?q= for queries with 3+ characters
     if (q.length >= 3) {
       try {
         const sRes = await fetch(`https://api.yani.tv/search?q=${encodeURIComponent(q)}`, {
-          headers: { 'User-Agent': 'Mozilla/5.0' }
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+          }
         });
         if (sRes.ok) {
-          const sData = await sRes.json();
-          if (Array.isArray(sData?.response) && sData.response.length > 0) {
-            list = sData.response;
+          const sJson = await sRes.json();
+          if (Array.isArray(sJson?.response) && sJson.response.length > 0) {
+            items = sJson.response;
           }
         }
-      } catch (e) {}
+      } catch (err) {}
     }
 
-    // Strategy 2: Fallback to /anime?limit=15&q=
-    if (list.length === 0) {
-      const aRes = await fetch(`https://api.yani.tv/anime?limit=15&q=${encodeURIComponent(q)}`, {
-        headers: { 'User-Agent': 'Mozilla/5.0' }
+    // 2. Fallback: Use /anime?limit=20&q= for 2-character queries or if /search returned nothing
+    if (items.length === 0) {
+      const aRes = await fetch(`https://api.yani.tv/anime?limit=20&q=${encodeURIComponent(q)}`, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
       });
       if (aRes.ok) {
-        const aData = await aRes.json();
-        if (Array.isArray(aData?.response) && aData.response.length > 0) {
-          list = aData.response;
+        const aJson = await aRes.json();
+        if (Array.isArray(aJson?.response)) {
+          items = aJson.response;
         }
       }
     }
 
-    // Double check: filter out completely irrelevant matches if API returned generic catalog
-    const qLower = q.toLowerCase();
-    const filtered = list.filter(item => {
-      const t = (item.title || '').toLowerCase();
-      const orig = Array.isArray(item.other_titles) ? item.other_titles.join(' ').toLowerCase() : '';
-      const alias = (item.anime_url || '').toLowerCase();
-      // Match if query words overlap with title, aliases or original titles
-      return t.includes(qLower) || orig.includes(qLower) || alias.includes(qLower);
-    });
-
-    const finalItems = filtered.length > 0 ? filtered : list.slice(0, 10);
-
-    const results = finalItems.map(item => {
+    const results = items.map(item => {
       let posterUrl = null;
       if (item.poster) {
         const raw = item.poster.medium || item.poster.small || item.poster.big || item.poster.fullsize;
@@ -75,13 +72,17 @@ export async function onRequestGet(context) {
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 'no-cache'
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
       }
     });
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message, results: [] }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-store'
+      }
     });
   }
 }
