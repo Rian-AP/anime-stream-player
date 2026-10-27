@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Anime Stream Player</title>
+  <!-- HLS.js for browser support on PC and Android, native Safari on iPhone -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --card: #181b26;
+      --accent: #ff4757;
+      --text: #f1f2f6;
+      --subtext: #a4b0be;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #2f3542;
+    }
+    header h1 {
+      font-size: 20px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .player-box {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      position: relative;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .controls-panel {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .input-row {
+      display: flex;
+      gap: 10px;
+    }
+    input, select, button {
+      background: #232738;
+      border: 1px solid #353b48;
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+    }
+    input:focus, select:focus {
+      border-color: var(--accent);
+    }
+    button {
+      background: var(--accent);
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    button:active { opacity: 0.8; }
+    .streams-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .stream-card {
+      background: #232738;
+      border: 1px solid #353b48;
+      border-radius: 8px;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .stream-card:hover, .stream-card.active {
+      border-color: var(--accent);
+      background: #2d3248;
+    }
+    .stream-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .badge {
+      background: rgba(255, 71, 87, 0.2);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .stream-meta {
+      font-size: 12px;
+      color: var(--subtext);
+    }
+    .stats-bar {
+      font-size: 13px;
+      color: var(--subtext);
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>⚡ Anime Edge Player</h1>
+    <span style="font-size: 12px; color: #2ed573;">Cloudflare Pages 24/7</span>
+  </header>
+
+  <div class="player-box">
+    <video id="videoPlayer" controls playsinline></video>
+  </div>
+
+  <div class="controls-panel">
+    <div class="input-row">
+      <input type="number" id="animeIdInput" value="2" placeholder="Anime ID" style="width: 110px;">
+      <input type="number" id="episodeInput" value="1" placeholder="Серия" style="width: 80px;">
+      <button id="loadBtn" style="flex: 1;">⚡ Загрузить серию</button>
+    </div>
+
+    <div class="stats-bar" id="statsBar">
+      <span>Готов к загрузке потоков</span>
+      <span id="loadTime">0 мс</span>
+    </div>
+
+    <div class="streams-grid" id="streamsGrid"></div>
+  </div>
+</div>
+
+<script>
+  const video = document.getElementById('videoPlayer');
+  const animeIdInput = document.getElementById('animeIdInput');
+  const episodeInput = document.getElementById('episodeInput');
+  const loadBtn = document.getElementById('loadBtn');
+  const streamsGrid = document.getElementById('streamsGrid');
+  const statsBar = document.getElementById('statsBar');
+  const loadTime = document.getElementById('loadTime');
+
+  let currentHls = null;
+
+  async function loadStreams() {
+    const animeId = animeIdInput.value.trim();
+    const episode = episodeInput.value.trim();
+    if (!animeId) return;
+
+    loadBtn.disabled = true;
+    loadBtn.innerText = 'Загрузка...';
+    streamsGrid.innerHTML = '';
+    statsBar.children[0].innerText = 'Опрос плееров Alloha, Kodik, CVH...';
+
+    const start = Date.now();
+    try {
+      const res = await fetch(`/api/stream?anime_id=${animeId}&episode=${episode}`);
+      const data = await res.json();
+      const elapsed = Date.now() - start;
+
+      loadTime.innerText = `${elapsed} мс`;
+      statsBar.children[0].innerText = `Найдено потоков: ${data.total_streams || 0}`;
+
+      if (!data.streams || data.streams.length === 0) {
+        streamsGrid.innerHTML = '<div style="color: #ff6b81;">Плееры для этой серии не найдены</div>';
+        return;
+      }
+
+      data.streams.forEach((s, idx) => {
+        const card = document.createElement('div');
+        card.className = `stream-card ${idx === 0 ? 'active' : ''}`;
+        
+        const maxQuality = s.qualities ? (s.qualities['1080p'] ? '1080p' : (s.qualities['720p'] ? '720p' : '480p')) : 'HLS';
+        
+        card.innerHTML = `
+          <div class="stream-header">
+            <strong>${s.voice}</strong>
+            <span class="badge">${maxQuality}</span>
+          </div>
+          <div class="stream-meta">
+            <span>Плеер: ${s.player.toUpperCase()}</span> • <span>${s.time_ms || 0} мс</span>
+          </div>
+        `;
+
+        card.onclick = () => {
+          document.querySelectorAll('.stream-card').forEach(c => c.classList.remove('active'));
+          card.classList.add('active');
+          playStream(s.hls_url);
+        };
+
+        streamsGrid.appendChild(card);
+      });
+
+      // Auto play first stream
+      if (data.streams[0]) {
+        playStream(data.streams[0].hls_url);
+      }
+    } catch (err) {
+      statsBar.children[0].innerText = 'Ошибка загрузки: ' + err.message;
+    } finally {
+      loadBtn.disabled = false;
+      loadBtn.innerText = '⚡ Загрузить серию';
+    }
+  }
+
+  function playStream(url) {
+    if (!url) return;
+    if (currentHls) {
+      currentHls.destroy();
+      currentHls = null;
+    }
+
+    if (Hls.isSupported()) {
+      currentHls = new Hls({ enableWorker: true });
+      currentHls.loadSource(url);
+      currentHls.attachMedia(video);
+      currentHls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      // Native Safari on iPhone / iPad / Mac
+      video.src = url;
+      video.addEventListener('loadedmetadata', () => video.play().catch(() => {}));
+    }
+  }
+
+  loadBtn.onclick = loadStreams;
+  window.addEventListener('DOMContentLoaded', loadStreams);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,9 @@
+node_modules/
+.wrangler/
+test/app.f950612f.js
+test/runtime.6be32962.js
+test/379.e849616a.js
+test/alloha_page.html
+.env
+.DS_Store
+Thumbs.db
