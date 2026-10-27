@@ -343,15 +343,30 @@ export async function onRequestGet(context) {
       }
       return null;
     } catch (e) {
-      return null;
+      return {
+        error: e.message || String(e),
+        pId,
+        url: v.iframe_url
+      };
     }
   });
 
   const settled = await Promise.all(tasks);
-  const streams = settled.filter(Boolean);
+  const streams = settled.filter(s => s && s.hls_url);
+  const debugErrors = settled.filter(s => s && s.error);
 
   return new Response(JSON.stringify({
     anime_id: parseInt(animeId, 10),
+    episode,
+    skips,
+    total_streams: streams.length,
+    streams,
+    debug: {
+      epVideosCount: epVideos.length,
+      errorsCount: debugErrors.length,
+      firstError: debugErrors[0] || null
+    }
+  }, null, 2), {
     episode,
     skips,
     total_streams: streams.length,
