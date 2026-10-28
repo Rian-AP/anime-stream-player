@@ -4,17 +4,16 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // API Route: /api/stream (Clean JSON backend extractor)
+    // API Route: /api/stream
     if (url.pathname === '/api/stream') {
       return onRequestGet({ request, env });
     }
 
-    return new Response(JSON.stringify({
-      status: "ok",
-      service: "Anime Stream Extractor API",
-      usage: "/api/stream?anime_id={id}&episode={number}"
-    }, null, 2), {
-      headers: { "Content-Type": "application/json" }
-    });
+    // Serve static files from /public (including index.html, icons, manifest)
+    if (env.ASSETS) {
+      return env.ASSETS.fetch(request);
+    }
+
+    return new Response('Not Found', { status: 404 });
   }
 };
