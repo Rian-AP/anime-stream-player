@@ -367,11 +367,6 @@ export async function onRequestGet(context) {
       firstError: debugErrors[0] || null
     }
   }, null, 2), {
-    episode,
-    skips,
-    total_streams: streams.length,
-    streams
-  }, null, 2), {
     status: 200,
     headers: {
       'Content-Type': 'application/json',
