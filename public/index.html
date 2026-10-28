@@ -5,19 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>AniPocket</title>
 
-    <!-- iOS PWA Meta Tags -->
+    <!-- iOS PWA Standalone & Fullscreen -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="AniPocket" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-    <!-- Theme Colors -->
-    <meta name="theme-color" content="#0b0c10" />
-    <link rel="icon" type="image/png" href="/icon-512.png" />
-    <script type="module" crossorigin src="/assets/index-LKJQE97G.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-CsUDhMuy.css">
-  <link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
-  <body>
-    <div id="app"></div>
+    <!-- 1. Light Home Screen Icon (Red Background) -->
+    <link rel="apple-touch-icon" href="/icon-light.png" media="(prefers-color-scheme: light)" />
+
+    <!-- 2. Dark Home Screen Icon (Deep Dark Background) -->
+    <link rel="apple-touch-icon" href="/icon-dark.png" media="(prefers-color-scheme: dark)" />
+
+    <!-- 3. Fallback / Default Apple Touch Icon -->
+    <link rel="apple-touch-icon" href="/icon-light.png" />
+
+    <!-- 4. Liquid Glass & Tinted Mask for iOS SpringBoard -->
+    <link rel="mask-icon" href="/icon-mask.svg" color="#ff373b" />
+
+    <!-- Theme Colors & Manifest -->
+    <meta name="theme-color" content="#0b0c10" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ff373b" media="(prefers-color-scheme: light)" />
+    <link rel="icon" type="image/png" href="/icon-light.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+  </head>
+  <body style="margin: 0; background: #0b0c10; color: #fff; font-family: -apple-system, BlinkMacSystemFont, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh;">
+    <div style="text-align: center;">
+      <h1 style="font-size: 20px; font-weight: 600; color: #ff373b;">AniPocket PWA Ready</h1>
+      <p style="font-size: 14px; color: #8e94a5; margin-top: 8px;">Добавьте на экран «Домой» для проверки иконки</p>
+    </div>
   </body>
 </html>
